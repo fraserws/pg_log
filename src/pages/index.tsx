@@ -9,12 +9,11 @@ import {
   YAxis,
 } from "recharts";
 
-const token =
-  "KGEIG2WkBHoIktPLSVQ2G5CV14wqv84ArkCZubZCOJIw--woJigU1gOWnd6KQ9-UV5qYgwu2AYiY1FxIi3dC-g==";
-const org = "fraserws.uk2@gmail.com";
-const url = "https://eu-central-1-1.aws.cloud2.influxdata.com";
-
 const Home = () => {
+  const token = process.env.INFLUX_TOKEN!;
+  const org = process.env.INFLUX_ORG!;
+  const url = process.env.INFLUX_URL!;
+
   const [queryClient] = useState(() => new InfluxDB({ url, token }));
   const { isLoading, data } = useQuery(
     "influxData",
