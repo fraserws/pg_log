@@ -34,9 +34,7 @@ const Home = () => {
       <div className="container mx-auto p-6">
         <h1 className="mb-8 text-3xl font-bold text-white">PureGym logger</h1>
         <p className="mb-4 text-lg"></p>
-        <p className="mb-4 text-lg">
-          Source: <a href="https://www.puregym.com/">PureGym</a>
-        </p>
+        <p className="mb-4 text-lg"></p>
 
         <ResponsiveContainer width="100%" height={400}>
           <LineChart
