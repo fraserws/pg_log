@@ -16,18 +16,13 @@ interface Row {
   _time: string;
   _value: number;
 }
-type TooltipProps = {
-  payload: {
-    _time: string;
-  };
-};
 
 const token = process.env.NEXT_PUBLIC_INFLUX_TOKEN;
 const org = process.env.NEXT_PUBLIC_INFLUX_ORG;
 const url = process.env.NEXT_PUBLIC_INFLUX_URL;
 
 if (!token || !org || !url) {
-  throw new Error("Missing InfluxDB env vars");
+  throw new Error("Missing InfluxDB credentials");
 }
 
 const Home = () => {
@@ -95,9 +90,8 @@ const Home = () => {
             />
             <Tooltip
               // Cast the value and props arguments to expected types
-              formatter={(value: number, name: string, props: TooltipProps) => {
-                const date = new Date(props?.payload?._time);
-                return [value, date.toLocaleString()];
+              formatter={(value: number, name: string) => {
+                return [value, "People"];
               }}
               labelFormatter={(value: string) => {
                 const date = new Date(value);
