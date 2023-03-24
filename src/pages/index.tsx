@@ -12,22 +12,40 @@ import {
   YAxis,
 } from "recharts";
 
-const token = process.env.NEXT_PUBLIC_INFLUX_TOKEN!;
-const org = process.env.NEXT_PUBLIC_INFLUX_ORG!;
-const url = process.env.NEXT_PUBLIC_INFLUX_URL!;
+interface Row {
+  _time: string;
+  _value: number;
+}
+type TooltipProps = {
+  payload: {
+    _time: string;
+  };
+};
+
+const token = process.env.NEXT_PUBLIC_INFLUX_TOKEN;
+const org = process.env.NEXT_PUBLIC_INFLUX_ORG;
+const url = process.env.NEXT_PUBLIC_INFLUX_URL;
+
+if (!token || !org || !url) {
+  throw new Error("Missing InfluxDB env vars");
+}
 
 const Home = () => {
   const [queryClient] = useState(() => new InfluxDB({ url, token }));
-  const [range, setRange] = useState(48);
-  const { isLoading, data, refetch } = useQuery(
+  const [range, setRange] = useState<number | null>(48);
+  const { isLoading, data, refetch } = useQuery<Row[]>(
     ["influxData", range],
-    () =>
-      queryClient
+    async () => {
+      if (!org || !range) return [];
+      const result = await queryClient
         .getQueryApi(org)
-        .collectRows(
+        // Cast the query result to the expected type Row[]
+        .collectRows<Row>(
           `from(bucket: "puregymbucket") |> range(start: -${range}h) |> filter(fn: (r) => r._field== "People")`
-        ),
-    { refetchInterval: 600000 } // set refetch interval to 10 minutes
+        );
+      return result;
+    }
+    // Return void from the promise function because useQuery expects it
   );
 
   if (isLoading) {
@@ -42,14 +60,18 @@ const Home = () => {
     <div className="h-screen bg-gray-900">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-center space-y-8 p-6">
         <h1 className="text-3xl font-bold text-white">PureGym Logger</h1>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2E3440" />
+        <ResponsiveContainer width="100%" height={500}>
+          <LineChart data={data || []}>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#2E3440"
+              className="pt-10"
+            />
             <YAxis
-              tickFormatter={(value) => {
-                return value;
-              }}
-              stroke="#D8DEE9"
+              type="number"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={(value: number) => value.toFixed(0)}
+              stroke="#82A1C1"
             />
             <Line
               type="monotone"
@@ -62,34 +84,40 @@ const Home = () => {
               dataKey="_time"
               height={30}
               stroke="#81A1C1"
-              tickFormatter={(timestamp) => {
-                const date = new Date(timestamp);
-                return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+              // Cast the value argument to string
+              tickFormatter={(value: string | number | Date) => {
+                if (typeof value === "string") {
+                  const date = new Date(value);
+                  return date.toLocaleTimeString();
+                }
+                return value.toLocaleString();
               }}
             />
             <Tooltip
-              formatter={(value, name, props) => {
-                const date = new Date(props.payload?._time);
-                return date.toLocaleString();
+              // Cast the value and props arguments to expected types
+              formatter={(value: number, name: string, props: TooltipProps) => {
+                const date = new Date(props?.payload?._time);
+                return [value, date.toLocaleString()];
               }}
-              labelFormatter={() => ""}
+              labelFormatter={(value: string) => {
+                const date = new Date(value);
+                return date.toLocaleTimeString();
+              }}
               contentStyle={{
                 backgroundColor: "#2E3440",
                 border: "none",
-                boxShadow: "0 5px 10px rgba(0, 0, 0, 0.25)",
+                boxShadow: "0 5px 10px rgba(0, 0, 0, 0.249G5)",
               }}
             />
           </LineChart>
         </ResponsiveContainer>
-        <div className="flex w-full justify-center">
+        <div className="space flex ">
           <Button
             onClick={() => {
-              setRange(48);
-              refetch();
+              setRange(24);
             }}
-            className="mt-8 w-full bg-blue-500 text-white hover:bg-blue-600"
           >
-            Reset
+            RESET
           </Button>
         </div>
       </div>
