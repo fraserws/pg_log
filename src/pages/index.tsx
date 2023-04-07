@@ -1,8 +1,8 @@
 import { InfluxDB } from "@influxdata/influxdb-client";
-import { Button, Loader } from "@mantine/core";
+import { Loader } from "@mantine/core";
+import moment from "moment";
 import { useState } from "react";
 import { useQuery } from "react-query";
-import moment from "moment";
 import {
   Brush,
   CartesianGrid,
@@ -18,6 +18,7 @@ interface Row {
   _time: string;
   _value: number;
 }
+//todo remove _value
 
 const token = process.env.NEXT_PUBLIC_INFLUX_TOKEN;
 const org = process.env.NEXT_PUBLIC_INFLUX_ORG;
@@ -97,7 +98,6 @@ const Home = () => {
             />
           </LineChart>
         </ResponsiveContainer>
-        <div className="space flex "></div>
       </div>
     </div>
   );
