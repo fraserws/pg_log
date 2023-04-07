@@ -2,6 +2,7 @@ import { InfluxDB } from "@influxdata/influxdb-client";
 import { Button, Loader } from "@mantine/core";
 import { useState } from "react";
 import { useQuery } from "react-query";
+import moment from "moment";
 import {
   Brush,
   CartesianGrid,
@@ -9,6 +10,7 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  XAxis,
   YAxis,
 } from "recharts";
 
@@ -27,16 +29,15 @@ if (!token || !org || !url) {
 
 const Home = () => {
   const [queryClient] = useState(() => new InfluxDB({ url, token }));
-  const [range, setRange] = useState<number | null>(48);
-  const { isLoading, data, refetch } = useQuery<Row[]>(
+  const [range, setRange] = useState<number>(48);
+  const { isLoading, data } = useQuery<Row[]>(
     ["influxData", range],
     async () => {
       if (!org || !range) return [];
       const result = await queryClient
         .getQueryApi(org)
-        // Cast the query result to the expected type Row[]
         .collectRows<Row>(
-          `from(bucket: "puregymbucket") |> range(start: -${range}h) |> filter(fn: (r) => r._field== "People")`
+          `from(bucket: "puregymbucket") |> range(start: -${range}h) |> filter(fn: (r) => r._field == "People")`
         );
       return result;
     }
@@ -50,7 +51,6 @@ const Home = () => {
       </div>
     );
   }
-
   return (
     <div className="h-screen bg-gray-900">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-center space-y-8 p-6">
@@ -68,6 +68,7 @@ const Home = () => {
               tickFormatter={(value: number) => value.toFixed(0)}
               stroke="#82A1C1"
             />
+            <XAxis dataKey="_time" />
             <Line
               type="monotone"
               dataKey="_value"
@@ -83,37 +84,20 @@ const Home = () => {
               tickFormatter={(value: string | number | Date) => {
                 if (typeof value === "string") {
                   const date = new Date(value);
+                  console.log(date);
                   return date.toLocaleTimeString();
                 }
                 return value.toLocaleString();
               }}
             />
             <Tooltip
-              // Cast the value and props arguments to expected types
-              formatter={(value: number, name: string) => {
-                return [value, "People"];
-              }}
               labelFormatter={(value: string) => {
-                const date = new Date(value);
-                return date.toLocaleTimeString();
-              }}
-              contentStyle={{
-                backgroundColor: "#2E3440",
-                border: "none",
-                boxShadow: "0 5px 10px rgba(0, 0, 0, 0.249G5)",
+                return moment(value).format("ddd MMM DD HH:mm");
               }}
             />
           </LineChart>
         </ResponsiveContainer>
-        <div className="space flex ">
-          <Button
-            onClick={() => {
-              setRange(24);
-            }}
-          >
-            RESET
-          </Button>
-        </div>
+        <div className="space flex "></div>
       </div>
     </div>
   );
